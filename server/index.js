@@ -1,9 +1,9 @@
-// basic express server
-const path = require('path')
-const express = require('express')
-const app = express()
-const port = 3000
+const redis = require('./db')
+const app = require('./src/app')
 
-app.use(express.static(path.resolve(__dirname, '../client/dist')))
+const PORT = process.env.PORT || 3000
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+redis.on('connect', () => {
+    console.log('Redis client connected successfully')
+    app.listen(PORT, () => console.log(`Server listening on port ${PORT} 🔥`))
+})
