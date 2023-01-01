@@ -33,7 +33,7 @@ exports.postNotify = expressAsyncHandler(async (req, res) => {
     const payload = {
         name: req.body.name,
         title: req.body.title,
-        timestamp: Date.now()
+        timestamp: new Date().toISOString()
     }
 
     if (notifications.length === 10) {
@@ -42,11 +42,6 @@ exports.postNotify = expressAsyncHandler(async (req, res) => {
 
     notifications.unshift(payload)
     await redis.set('notifications', JSON.stringify(notifications))
-
-    console.log({
-        subscribers: JSON.parse(await redis.get('subscribers')),
-        notifications: JSON.parse(await redis.get('notifications'))
-    })
 
     res.sendStatus(201)
 
@@ -58,9 +53,13 @@ exports.postNotify = expressAsyncHandler(async (req, res) => {
         })
     )
 
-    Promise.all(asyncNotifySubscribers)
-        .then((success) => console.log(success))
-        .catch((error) => console.log(error))
+    Promise.all(asyncNotifySubscribers).catch(async (error) => {
+        if (error.statusCode === 410) {
+            const index = subscribers.findIndex((s) => error.endpoint === s.endpoint)
+            subscribers.splice(index, 1)
+            await redis.set('subscribers', JSON.stringify(subscribers))
+        }
+    })
 })
 
 /**
@@ -70,7 +69,7 @@ exports.postNotify = expressAsyncHandler(async (req, res) => {
 exports.getNotifications = expressAsyncHandler(async (req, res) => {
     const notifications = JSON.parse(await redis.get('notifications')) || []
 
-    res.send({ notifications: notifications })
+    res.send(notifications)
 })
 
 /**

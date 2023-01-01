@@ -1,4 +1,3 @@
-const defaultTheme = require('tailwindcss/defaultTheme')
 const konstaConfig = require('konsta/config')
 
 /** @type {import('tailwindcss').Config} */
