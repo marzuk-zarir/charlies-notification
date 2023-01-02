@@ -10,7 +10,7 @@ export default function useNotifications() {
 
     useEffect(() => {
         ;(async () => {
-            const res = await fetch('/api/notifications')
+            const res = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/notifications`)
             const data = (await res.json()).map((n) => ({
                 ...n,
                 timestamp: dayjs(n.timestamp).fromNow()

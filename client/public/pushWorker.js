@@ -8,9 +8,11 @@ self.addEventListener('push', (e) => {
 
     notificationsChannel.postMessage(data)
 
-    registration.showNotification(data.name, {
-        body: data.title,
-        tag: data.name,
-        icon: 'app-icon.png'
-    })
+    e.waitUntil(
+        self.registration.showNotification(data.name, {
+            body: data.title,
+            tag: data.name,
+            icon: 'app-icon/256x256.png'
+        })
+    )
 })
