@@ -12,10 +12,11 @@ const registerSubscription = async () => {
             if (registration.active) {
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
-                    applicationServerKey: import.meta.env.VITE_PUBLIC_VAPID_KEY
+                    applicationServerKey:
+                        'BFT89EZ1NEbxublJk2e4WV0O0nOEkKZfBan2YcdbPorn5dpDUtZMsIvZxjb5p4g7ih_byIbjfkejorppNWRb5Gs'
                 })
 
-                await fetch(`${import.meta.env.VITE_DOMAIN}/api/subscribe`, {
+                await fetch('/api/subscribe', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
