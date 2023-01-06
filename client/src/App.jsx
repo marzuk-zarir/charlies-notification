@@ -15,7 +15,7 @@ const registerSubscription = async () => {
                     applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
                 })
 
-                await fetch(`${import.meta.env.VITE_API_ENDPOINT}/subscribe`, {
+                await fetch(`${import.meta.env.VITE_API_ENDPOINT}/browser/subscribe`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

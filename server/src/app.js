@@ -1,21 +1,19 @@
 const express = require('express')
 const cors = require('cors')
 const apiRouter = require('./routes')
-const { notFoundHandler, defaultErrorHandler } = require('./middlewares/errors')
-const registerWebPush = require('./middlewares/registerWebPush')
+const { notFoundHandler, defaultErrorHandler } = require('./middlewares/common')
 
 const app = express()
 
 // middlewares
 app.use(cors())
 app.use(express.json())
-app.use(registerWebPush)
 
-// routers
+// router
 app.use('/api', apiRouter)
 
 // error handlers
-apiRouter.use(notFoundHandler)
-apiRouter.use(defaultErrorHandler)
+app.use(notFoundHandler)
+app.use(defaultErrorHandler)
 
 module.exports = app

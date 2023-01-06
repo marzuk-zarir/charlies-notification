@@ -1,6 +1,6 @@
 const { body } = require('express-validator')
 
-module.exports = [
+exports.notify = [
     body('name')
         .trim()
         .notEmpty()

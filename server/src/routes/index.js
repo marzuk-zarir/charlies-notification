@@ -1,12 +1,15 @@
 const apiRouter = require('express').Router()
-const { postSubscribe, postNotify, getNotifications, getHealth } = require('../controllers')
-const validator = require('../middlewares/validator')
-const notify = require('../schemas/notify')
-const subscribe = require('../schemas/subscribe')
+const defaultRouter = require('./default')
+const browserRouter = require('./browser')
+const expoRouter = require('./expo')
+const { registerWebPush } = require('../middlewares/browser')
+const { registerExpoPush } = require('../middlewares/expo')
 
-apiRouter.post('/subscribe', validator(subscribe), postSubscribe)
-apiRouter.post('/notify', validator(notify), postNotify)
-apiRouter.get('/notifications', getNotifications)
-apiRouter.get('/health', getHealth)
+apiRouter.use(registerWebPush)
+apiRouter.use(registerExpoPush)
+
+apiRouter.use('/browser', browserRouter)
+apiRouter.use('/expo', expoRouter)
+apiRouter.use('/', defaultRouter)
 
 module.exports = apiRouter
