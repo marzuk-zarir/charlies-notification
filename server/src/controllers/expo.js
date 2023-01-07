@@ -1,4 +1,5 @@
 const expressAsyncHandler = require('express-async-handler')
+const redis = require('../../db')
 
 /**
  * @Post /api/expo/subscribe
@@ -18,6 +19,8 @@ exports.postSubscribe = expressAsyncHandler(async (req, res) => {
 
     subscribers.push(token)
     await redis.set('expo-subscribers', JSON.stringify(subscribers))
+
+    console.log(await redis.get('expo-subscribers'))
 
     res.sendStatus(201)
 })
