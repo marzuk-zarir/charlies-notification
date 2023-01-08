@@ -1,3 +1,4 @@
+const { Expo } = require('expo-server-sdk')
 const expressAsyncHandler = require('express-async-handler')
 const webpush = require('web-push')
 const redis = require('../../db')
@@ -7,7 +8,7 @@ const redis = require('../../db')
  * @description send notification to subscribers
  */
 exports.postNotify = expressAsyncHandler(async (req, res) => {
-    const { expo } = req
+    const expo = new Expo()
     const webSubscribers = JSON.parse(await redis.get('web-subscribers')) || []
     const expoSubscribers = JSON.parse(await redis.get('expo-subscribers')) || []
     const notifications = JSON.parse(await redis.get('notifications')) || []
@@ -24,60 +25,29 @@ exports.postNotify = expressAsyncHandler(async (req, res) => {
     notifications.unshift(payload)
     await redis.set('notifications', JSON.stringify(notifications))
 
-    res.sendStatus(201)
-
     //* send notification to expo subscribers
     const expoChunks = expo.chunkPushNotifications(
         expoSubscribers.map((subscriber) => ({
             to: subscriber,
             sound: 'default',
+            ttl: 86400,
+            title: payload.name,
             body: payload.title,
             data: { ...payload }
         }))
     )
-    const expoTickets = []
-    const expoReceiptIds = []
 
-    // send expo chunks in parallel
     for (const expoChunk of expoChunks) {
-        const expoChunkTickets = await expo.sendPushNotificationsAsync(expoChunk)
-        console.log({ expoChunkTickets })
-        expoTickets.push(...expoChunkTickets)
-    }
+        const expoReceipts = await expo.sendPushNotificationsAsync(expoChunk)
 
-    for (const expoTicket of expoTickets) {
-        if (expoTicket.id) {
-            expoReceiptIds.push(expoTicket.id)
-        }
-    }
+        expoReceipts.forEach(async (ticket) => {
+            if (ticket.status === 'error' && ticket.details.error === 'DeviceNotRegistered') {
+                const index = expoSubscribers.findIndex((s) => ticket.details.expoPushToken === s)
 
-    // get expo receipts in parallel
-    const expoReceiptChunks = await expo.chunkPushNotificationReceiptIds(expoReceiptIds)
-
-    console.log({ expoReceiptChunks })
-
-    // remove invalid expo subscribers (device not registered)
-    for (const expoReceiptChunk of expoReceiptChunks) {
-        const expoReceipts = await expo.getPushNotificationReceiptsAsync(expoReceiptChunk)
-
-        console.log({ expoReceipts })
-
-        for (const expoReceipt of expoReceipts) {
-            const { status, details } = expoReceipt
-
-            if (status === 'ok') {
-                continue
-            }
-
-            if (expoReceipt.status === 'error' && details.error === 'DeviceNotRegistered') {
-                const index = expoSubscribers.findIndex((s) => expoReceipt.id === s)
                 expoSubscribers.splice(index, 1)
-
-                console.log({ expoSubscribers })
-
                 await redis.set('expo-subscribers', JSON.stringify(expoSubscribers))
             }
-        }
+        })
     }
 
     //* send notification to web subscribers
@@ -95,6 +65,8 @@ exports.postNotify = expressAsyncHandler(async (req, res) => {
             await redis.set('web-subscribers', JSON.stringify(webSubscribers))
         }
     })
+
+    res.sendStatus(201)
 })
 
 /**
